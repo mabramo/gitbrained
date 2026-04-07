@@ -167,4 +167,17 @@ class LocalStorageService implements ILocalStorageService {
       throw ErrorHandler.handle(e);
     }
   }
+
+  @override
+  Future<void> createFolder(String repoPath) async {
+    try {
+      // Git doesn't track empty directories — create a .gitkeep so the
+      // folder exists in the repo and will be pushed on next sync.
+      final gitkeepPath = '$repoPath/.gitkeep';
+      await writeNote(gitkeepPath, '');
+      await markDirty(gitkeepPath);
+    } catch (e) {
+      throw ErrorHandler.handle(e);
+    }
+  }
 }

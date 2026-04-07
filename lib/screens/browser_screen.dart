@@ -33,6 +33,7 @@ class _BrowserScreenState extends State<BrowserScreen> {
   String? _error;
   StreamSubscription<SyncState>? _syncSub;
   SyncState _syncState = const SyncState();
+  bool _fabExpanded = false;
 
   @override
   void didChangeDependencies() {
@@ -93,13 +94,55 @@ class _BrowserScreenState extends State<BrowserScreen> {
     _load();
   }
 
+  void _toggleFab() => setState(() => _fabExpanded = !_fabExpanded);
+
   Future<void> _newNote() async {
+    setState(() => _fabExpanded = false);
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => EditorScreen(basePath: _currentPath),
       ),
     );
     _load();
+  }
+
+  Future<void> _newFolder() async {
+    setState(() => _fabExpanded = false);
+    String folderName = '';
+    await showDialog(
+      context: context,
+      builder: (ctx) {
+        final ctrl = TextEditingController();
+        return AlertDialog(
+          title: const Text('New folder'),
+          content: TextField(
+            controller: ctrl,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'folder-name'),
+            onChanged: (v) => folderName = v.trim(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Create'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (folderName.isEmpty) return;
+    final path = _currentPath.isEmpty ? folderName : '$_currentPath/$folderName';
+    try {
+      await _local.createFolder(path);
+      _load();
+    } catch (e) {
+      if (mounted) showErrorSnackBar(context, e);
+    }
   }
 
   Future<void> _triggerSync() async {
@@ -155,10 +198,34 @@ class _BrowserScreenState extends State<BrowserScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _newNote,
-        tooltip: 'New note',
-        child: const Icon(Icons.add),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (_fabExpanded) ...[
+            _miniFab(
+              icon: Icons.description_outlined,
+              label: 'New note',
+              onTap: _newNote,
+            ),
+            const SizedBox(height: 12),
+            _miniFab(
+              icon: Icons.folder_outlined,
+              label: 'New folder',
+              onTap: _newFolder,
+            ),
+            const SizedBox(height: 16),
+          ],
+          FloatingActionButton(
+            onPressed: _toggleFab,
+            tooltip: _fabExpanded ? 'Close' : 'New',
+            child: AnimatedRotation(
+              turns: _fabExpanded ? 0.125 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: const Icon(Icons.add),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -271,5 +338,37 @@ class _BrowserScreenState extends State<BrowserScreen> {
     if (diff.inMinutes < 1) return 'just now';
     if (diff.inHours < 1) return '${diff.inMinutes}m ago';
     return '${diff.inHours}h ago';
+  }
+
+  Widget _miniFab({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainer,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        FloatingActionButton.small(
+          heroTag: label,
+          onPressed: onTap,
+          child: Icon(icon, size: 20),
+        ),
+      ],
+    );
   }
 }

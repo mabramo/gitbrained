@@ -32,6 +32,7 @@ abstract class ILocalStorageService {
   Future<void> markDirty(String repoPath);
   Future<void> clearDirty(String repoPath);
   Future<Set<String>> getDirtyPaths();
+  Future<void> createFolder(String repoPath);
 }
 
 abstract class IGitService {
