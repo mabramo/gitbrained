@@ -76,6 +76,27 @@ void main() {
     });
   });
 
+  group('createFolder', () {
+    test('creates .gitkeep placeholder inside the folder', () async {
+      await service.createFolder('projects');
+      final note = await service.readNote('projects/.gitkeep');
+      expect(note, isNotNull);
+      expect(note!.content, isEmpty);
+    });
+
+    test('marks .gitkeep as dirty', () async {
+      await service.createFolder('projects');
+      final dirty = await service.getDirtyPaths();
+      expect(dirty, contains('projects/.gitkeep'));
+    });
+
+    test('creates nested folders', () async {
+      await service.createFolder('a/b/c');
+      final note = await service.readNote('a/b/c/.gitkeep');
+      expect(note, isNotNull);
+    });
+  });
+
   group('listLocal', () {
     test('returns dirs before files', () async {
       await service.writeNote('subdir/note.md', 'x');

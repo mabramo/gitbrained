@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/note.dart';
 import '../models/repo_item.dart';
 import '../services/interfaces.dart';
+import '../utils/exceptions.dart';
 import '../utils/snackbar_helper.dart';
 import '../widgets/breadcrumb_bar.dart';
 import '../widgets/error_view.dart';
@@ -34,6 +36,9 @@ class _BrowserScreenState extends State<BrowserScreen> {
   StreamSubscription<SyncState>? _syncSub;
   SyncState _syncState = const SyncState();
   bool _fabExpanded = false;
+  bool _searching = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void didChangeDependencies() {
@@ -54,17 +59,54 @@ class _BrowserScreenState extends State<BrowserScreen> {
   @override
   void dispose() {
     _syncSub?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
 
   Future<void> _load() async {
     setState(() { _loading = true; _error = null; });
     try {
-      final items = await _git.listDirectory(_currentPath);
+      // Remote may 404 for local-only folders not yet synced — that's fine.
+      List<RepoItem> remoteItems = [];
+      try {
+        remoteItems = await _git.listDirectory(_currentPath);
+      } on NotFoundException {
+        // Folder exists locally but not on remote yet
+      }
+
+      final localEntities = await _local.listLocal(_currentPath);
       final dirty = await _local.getDirtyPaths();
+
+      // Build set of remote paths for dedup
+      final remotePaths = {for (final i in remoteItems) i.path};
+
+      // Synthetic RepoItems for local-only entries (not yet synced)
+      final localOnly = <RepoItem>[];
+      for (final entity in localEntities) {
+        final isDir = entity is Directory;
+        final name = entity.path.split('/').last;
+        if (name.startsWith('.')) continue; // skip .gitkeep etc
+        final repoPath = _currentPath.isEmpty ? name : '$_currentPath/$name';
+        if (!remotePaths.contains(repoPath)) {
+          localOnly.add(RepoItem(
+            name: name,
+            path: repoPath,
+            sha: '',
+            type: isDir ? 'dir' : 'file',
+          ));
+        }
+      }
+
+      final merged = [...remoteItems, ...localOnly];
+      merged.sort((a, b) {
+        if (a.isDir && !b.isDir) return -1;
+        if (!a.isDir && b.isDir) return 1;
+        return a.name.compareTo(b.name);
+      });
+
       if (mounted) {
         setState(() {
-          _items = items;
+          _items = merged;
           _dirtyPaths = dirty;
           _loading = false;
         });
@@ -83,8 +125,16 @@ class _BrowserScreenState extends State<BrowserScreen> {
   }
 
   void _navigateTo(String path) {
-    setState(() => _currentPath = path);
+    _searchController.clear();
+    setState(() { _currentPath = path; _searchQuery = ''; _searching = false; });
     _load();
+  }
+
+  void _openSearch() => setState(() => _searching = true);
+
+  void _closeSearch() {
+    _searchController.clear();
+    setState(() { _searching = false; _searchQuery = ''; });
   }
 
   Future<void> _openFile(RepoItem item) async {
@@ -95,6 +145,22 @@ class _BrowserScreenState extends State<BrowserScreen> {
   }
 
   void _toggleFab() => setState(() => _fabExpanded = !_fabExpanded);
+
+  bool _fuzzyMatch(String query, String target) {
+    if (query.isEmpty) return true;
+    final q = query.toLowerCase();
+    final t = target.toLowerCase();
+    int qi = 0;
+    for (int ti = 0; ti < t.length && qi < q.length; ti++) {
+      if (t[ti] == q[qi]) qi++;
+    }
+    return qi == q.length;
+  }
+
+  List<RepoItem> get _filteredItems {
+    if (_searchQuery.isEmpty) return _items;
+    return _items.where((i) => _fuzzyMatch(_searchQuery, i.name)).toList();
+  }
 
   Future<void> _newNote() async {
     setState(() => _fabExpanded = false);
@@ -109,31 +175,31 @@ class _BrowserScreenState extends State<BrowserScreen> {
   Future<void> _newFolder() async {
     setState(() => _fabExpanded = false);
     String folderName = '';
+    final ctrl = TextEditingController();
     await showDialog(
       context: context,
-      builder: (ctx) {
-        final ctrl = TextEditingController();
-        return AlertDialog(
-          title: const Text('New folder'),
-          content: TextField(
-            controller: ctrl,
-            autofocus: true,
-            decoration: const InputDecoration(hintText: 'folder-name'),
-            onChanged: (v) => folderName = v.trim(),
+      builder: (ctx) => AlertDialog(
+        title: const Text('New folder'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'folder-name'),
+          onChanged: (v) => folderName = v.trim(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Create'),
-            ),
-          ],
-        );
-      },
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Create'),
+          ),
+        ],
+      ),
     );
+    // Defer disposal until after the dialog's exit animation completes.
+    WidgetsBinding.instance.addPostFrameCallback((_) => ctrl.dispose());
 
     if (folderName.isEmpty) return;
     final path = _currentPath.isEmpty ? folderName : '$_currentPath/$folderName';
@@ -155,21 +221,51 @@ class _BrowserScreenState extends State<BrowserScreen> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Scaffold(
+    return PopScope(
+      canPop: !_searching,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _closeSearch();
+      },
+      child: Scaffold(
       appBar: AppBar(
-        title: const Text('Gitbrained'),
+        leading: _searching
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _closeSearch,
+              )
+            : null,
+        title: _searching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                onChanged: (v) => setState(() => _searchQuery = v.trim()),
+                decoration: InputDecoration(
+                  hintText: 'Search…',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(color: cs.onSurfaceVariant.withAlpha(160)),
+                ),
+                style: theme.textTheme.titleMedium,
+              )
+            : const Text('Gitbrained'),
         actions: [
-          _syncIcon(theme),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: 'Settings',
-            onPressed: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
-              _load();
-            },
-          ),
+          if (!_searching) ...[
+            IconButton(
+              icon: const Icon(Icons.search),
+              tooltip: 'Search',
+              onPressed: _openSearch,
+            ),
+            _syncIcon(theme),
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              tooltip: 'Settings',
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                );
+                _load();
+              },
+            ),
+          ],
         ],
       ),
       body: Column(
@@ -185,49 +281,52 @@ class _BrowserScreenState extends State<BrowserScreen> {
                 ? const LoadingView()
                 : _error != null
                     ? ErrorView(message: _error!, onRetry: _load)
-                    : _items.isEmpty
+                    : _filteredItems.isEmpty
                         ? _emptyView(theme)
                         : RefreshIndicator(
                             onRefresh: _load,
                             child: ListView.separated(
-                              itemCount: _items.length,
+                              itemCount: _filteredItems.length,
                               separatorBuilder: (context, index) => const Divider(height: 0),
-                              itemBuilder: (_, i) => _itemTile(_items[i], theme),
+                              itemBuilder: (_, i) => _itemTile(_filteredItems[i], theme),
                             ),
                           ),
           ),
         ],
       ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (_fabExpanded) ...[
-            _miniFab(
-              icon: Icons.description_outlined,
-              label: 'New note',
-              onTap: _newNote,
+      floatingActionButton: _searching
+          ? null
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (_fabExpanded) ...[
+                  _miniFab(
+                    icon: Icons.description_outlined,
+                    label: 'New note',
+                    onTap: _newNote,
+                  ),
+                  const SizedBox(height: 12),
+                  _miniFab(
+                    icon: Icons.folder_outlined,
+                    label: 'New folder',
+                    onTap: _newFolder,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                FloatingActionButton(
+                  onPressed: _toggleFab,
+                  tooltip: _fabExpanded ? 'Close' : 'New',
+                  child: AnimatedRotation(
+                    turns: _fabExpanded ? 0.125 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(Icons.add),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            _miniFab(
-              icon: Icons.folder_outlined,
-              label: 'New folder',
-              onTap: _newFolder,
-            ),
-            const SizedBox(height: 16),
-          ],
-          FloatingActionButton(
-            onPressed: _toggleFab,
-            tooltip: _fabExpanded ? 'Close' : 'New',
-            child: AnimatedRotation(
-              turns: _fabExpanded ? 0.125 : 0,
-              duration: const Duration(milliseconds: 200),
-              child: const Icon(Icons.add),
-            ),
-          ),
-        ],
-      ),
-    );
+    ),
+  );
   }
 
   Widget _itemTile(RepoItem item, ThemeData theme) {
@@ -322,9 +421,10 @@ class _BrowserScreenState extends State<BrowserScreen> {
   }
 
   Widget _emptyView(ThemeData theme) {
+    final message = _searchQuery.isNotEmpty ? 'No results.' : 'No files here.';
     return Center(
       child: Text(
-        'No files here.',
+        message,
         style: theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
         ),

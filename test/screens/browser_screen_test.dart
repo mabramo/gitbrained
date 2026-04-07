@@ -13,6 +13,8 @@ import 'package:gitbrained/widgets/error_view.dart';
 import '../helpers/mock_services.dart';
 
 void main() {
+  setUpAll(registerFallbacks);
+
   late MockGitService git;
   late MockLocalStorageService local;
   late MockConfigService config;
@@ -29,6 +31,8 @@ void main() {
     when(() => sync.stateStream).thenAnswer((_) => syncController.stream);
     when(() => sync.currentState).thenReturn(const SyncState());
     when(() => local.getDirtyPaths()).thenAnswer((_) async => {});
+    // _load() merges remote with local filesystem — return empty by default.
+    when(() => local.listLocal(any())).thenAnswer((_) async => []);
   });
 
   tearDown(() {

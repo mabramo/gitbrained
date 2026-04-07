@@ -3,13 +3,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:gitbrained/services/config_service.dart';
 import 'package:gitbrained/services/git_service.dart';
 import 'package:gitbrained/utils/exceptions.dart';
-
-class MockConfigService extends Mock implements ConfigService {}
+import '../helpers/mock_services.dart';
 
 void main() {
+  setUpAll(registerFallbacks);
+
   late MockConfigService config;
   late Dio dio;
   late DioAdapter adapter;

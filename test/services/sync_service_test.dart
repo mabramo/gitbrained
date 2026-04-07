@@ -8,6 +8,8 @@ import 'package:gitbrained/utils/exceptions.dart';
 import '../helpers/mock_services.dart';
 
 void main() {
+  setUpAll(registerFallbacks);
+
   late MockConfigService config;
   late MockGitService git;
   late MockLocalStorageService local;

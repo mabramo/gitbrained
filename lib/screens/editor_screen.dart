@@ -26,6 +26,8 @@ class _EditorScreenState extends State<EditorScreen> {
   late String _path;
   bool _dirty = false;
   bool _saving = false;
+  String _previousText = '';
+  bool _handlingAutoList = false;
 
   bool get _isNew => widget.note == null;
 
@@ -40,10 +42,17 @@ class _EditorScreenState extends State<EditorScreen> {
       _controller = TextEditingController(text: widget.note?.content ?? '');
       _focusNode = FocusNode();
       _path = widget.note?.path ?? '';
+      _previousText = _controller.text;
 
       _controller.addListener(() {
-        if (!_dirty && _controller.text != (widget.note?.content ?? '')) {
+        final text = _controller.text;
+        if (!_dirty && text != (widget.note?.content ?? '')) {
           setState(() => _dirty = true);
+        }
+        if (!_handlingAutoList) {
+          final prev = _previousText;
+          _previousText = text;
+          _handleAutoList(text, prev);
         }
       });
 
@@ -103,39 +112,113 @@ class _EditorScreenState extends State<EditorScreen> {
     return result ?? false;
   }
 
+  void _handleAutoList(String text, String previousText) {
+    final sel = _controller.selection;
+    if (!sel.isCollapsed) return;
+    final pos = sel.baseOffset;
+    if (pos < 1 || pos > text.length) return;
+    // Only act when a single newline was just inserted
+    if (text.length != previousText.length + 1) return;
+    if (text[pos - 1] != '\n') return;
+
+    // Find the previous line
+    final prevLineStart = previousText.lastIndexOf('\n', pos - 2) + 1;
+    final prevLine = previousText.substring(prevLineStart, pos - 1);
+
+    // Bullet list: "- ", "* ", "- [ ] ", "- [x] "
+    final bulletRe = RegExp(r'^(\s*)([-*]) (\[[ x]\] )?(.*)$');
+    final numberedRe = RegExp(r'^(\s*)(\d+)\. (.*)$');
+
+    final bm = bulletRe.firstMatch(prevLine);
+    final nm = numberedRe.firstMatch(prevLine);
+
+    TextEditingValue? newValue;
+
+    if (bm != null) {
+      final indent = bm.group(1)!;
+      final marker = bm.group(2)!;
+      final checkbox = bm.group(3);
+      final content = bm.group(4)!;
+      if (content.isEmpty) {
+        final newText = text.substring(0, prevLineStart) + text.substring(pos);
+        newValue = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(offset: prevLineStart),
+        );
+      } else {
+        final continuation = checkbox != null ? '$indent$marker [ ] ' : '$indent$marker ';
+        final newText = text.substring(0, pos) + continuation + text.substring(pos);
+        newValue = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(offset: pos + continuation.length),
+        );
+      }
+    } else if (nm != null) {
+      final indent = nm.group(1)!;
+      final num = int.parse(nm.group(2)!);
+      final content = nm.group(3)!;
+      if (content.isEmpty) {
+        final newText = text.substring(0, prevLineStart) + text.substring(pos);
+        newValue = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(offset: prevLineStart),
+        );
+      } else {
+        final continuation = '$indent${num + 1}. ';
+        final newText = text.substring(0, pos) + continuation + text.substring(pos);
+        newValue = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(offset: pos + continuation.length),
+        );
+      }
+    }
+
+    if (newValue != null) {
+      _handlingAutoList = true;
+      _controller.value = newValue;
+      _previousText = newValue.text;
+      _handlingAutoList = false;
+    }
+  }
+
   Future<void> _promptNewFilename() async {
-    final subdir = _config.subdir;
+    // Use current browser dir if provided, otherwise fall back to configured subdir
+    final basePath = widget.basePath;
+    final effectiveBase = (basePath != null && basePath.isNotEmpty)
+        ? basePath
+        : _config.subdir;
+
     String filename = '';
+    final ctrl = TextEditingController();
     await showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) {
-        final ctrl = TextEditingController();
-        return AlertDialog(
-          title: const Text('New note'),
-          content: TextField(
-            controller: ctrl,
-            autofocus: true,
-            decoration: InputDecoration(
-              labelText: 'Filename',
-              hintText: 'my-note.md',
-              suffixText: subdir.isNotEmpty ? '  in /$subdir' : '',
-            ),
-            onChanged: (v) => filename = v,
+      builder: (ctx) => AlertDialog(
+        title: const Text('New note'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: InputDecoration(
+            labelText: 'Filename',
+            hintText: 'my-note.md',
+            suffixText: effectiveBase.isNotEmpty ? '  in /$effectiveBase' : '',
           ),
-          actions: [
-            TextButton(
-              onPressed: () { Navigator.of(ctx).pop(); filename = ''; },
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Create'),
-            ),
-          ],
-        );
-      },
+          onChanged: (v) => filename = v,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () { Navigator.of(ctx).pop(); filename = ''; },
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Create'),
+          ),
+        ],
+      ),
     );
+    // Defer disposal until after the dialog's exit animation completes.
+    WidgetsBinding.instance.addPostFrameCallback((_) => ctrl.dispose());
 
     if (filename.isEmpty) {
       if (mounted) Navigator.of(context).pop();
@@ -143,9 +226,9 @@ class _EditorScreenState extends State<EditorScreen> {
     }
 
     if (!filename.endsWith('.md')) filename += '.md';
-    final base = subdir.isNotEmpty ? subdir : '';
-    _path = base.isNotEmpty ? '$base/$filename' : filename;
-    setState(() {});
+    setState(() {
+      _path = effectiveBase.isNotEmpty ? '$effectiveBase/$filename' : filename;
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) => _focusNode.requestFocus());
   }
 

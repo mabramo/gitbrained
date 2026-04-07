@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 500" width="1024" height="500">
+  <!-- Background -->
+  <rect width="1024" height="500" fill="#1C1F26"/>
+
+  <!-- Subtle grid texture -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ffffff" stroke-width="0.3" opacity="0.04"/>
+  </pattern>
+  <rect width="1024" height="500" fill="url(#grid)"/>
+
+  <!-- Left side: icon (scaled down from 512×512 to ~200×200, centered vertically at x=100) -->
+  <g transform="translate(80, 150) scale(0.39)">
+    <!-- Notepad shadow -->
+    <rect x="114" y="108" width="264" height="320" rx="12" fill="#111318" opacity="0.6"/>
+    <!-- Notepad body -->
+    <rect x="106" y="100" width="264" height="320" rx="12" fill="#F5F0E8"/>
+    <!-- Notepad top binding strip -->
+    <rect x="106" y="100" width="264" height="32" rx="12" fill="#E0D8C8"/>
+    <rect x="106" y="116" width="264" height="16" fill="#E0D8C8"/>
+    <!-- Spiral binding holes -->
+    <circle cx="158" cy="116" r="7" fill="#1C1F26"/>
+    <circle cx="200" cy="116" r="7" fill="#1C1F26"/>
+    <circle cx="242" cy="116" r="7" fill="#1C1F26"/>
+    <circle cx="284" cy="116" r="7" fill="#1C1F26"/>
+    <circle cx="326" cy="116" r="7" fill="#1C1F26"/>
+    <!-- Notepad lines -->
+    <line x1="130" y1="172" x2="346" y2="172" stroke="#D4CCBC" stroke-width="2"/>
+    <line x1="130" y1="196" x2="346" y2="196" stroke="#D4CCBC" stroke-width="2"/>
+    <line x1="130" y1="220" x2="346" y2="220" stroke="#D4CCBC" stroke-width="2"/>
+    <line x1="130" y1="244" x2="346" y2="244" stroke="#D4CCBC" stroke-width="2"/>
+    <line x1="130" y1="268" x2="346" y2="268" stroke="#D4CCBC" stroke-width="2"/>
+    <line x1="130" y1="292" x2="346" y2="292" stroke="#D4CCBC" stroke-width="2"/>
+    <line x1="130" y1="316" x2="346" y2="316" stroke="#D4CCBC" stroke-width="2"/>
+    <line x1="130" y1="340" x2="346" y2="340" stroke="#D4CCBC" stroke-width="2"/>
+    <line x1="130" y1="364" x2="346" y2="364" stroke="#D4CCBC" stroke-width="2"/>
+    <!-- Left margin line -->
+    <line x1="152" y1="132" x2="152" y2="404" stroke="#E8A090" stroke-width="2" opacity="0.7"/>
+    <!-- Git branch -->
+    <line x1="210" y1="175" x2="210" y2="370" stroke="#5A8A6A" stroke-width="9" stroke-linecap="round"/>
+    <path d="M 210 240 Q 210 288 288 288" stroke="#5A8A6A" stroke-width="9" stroke-linecap="round" fill="none"/>
+    <circle cx="210" cy="175" r="14" fill="#5A8A6A"/>
+    <circle cx="210" cy="175" r="7" fill="#F5F0E8"/>
+    <circle cx="210" cy="240" r="14" fill="#5A8A6A"/>
+    <circle cx="210" cy="240" r="7" fill="#F5F0E8"/>
+    <circle cx="210" cy="370" r="14" fill="#5A8A6A"/>
+    <circle cx="210" cy="370" r="7" fill="#F5F0E8"/>
+    <circle cx="288" cy="288" r="14" fill="#5A8A6A"/>
+    <circle cx="288" cy="288" r="7" fill="#F5F0E8"/>
+    <!-- Pencil -->
+    <g transform="translate(340, 170) rotate(35)">
+      <rect x="-13" y="-105" width="26" height="148" rx="4" fill="#E8C97A"/>
+      <polygon points="-13,43 13,43 0,82" fill="#D4A843"/>
+      <polygon points="-5,70 5,70 0,82" fill="#2C2A28"/>
+      <rect x="-13" y="-120" width="26" height="19" rx="4" fill="#C47B6B"/>
+      <rect x="-13" y="-105" width="26" height="7" fill="#B8956A"/>
+      <rect x="-6" y="-103" width="7" height="138" rx="2" fill="#F2D98A" opacity="0.45"/>
+    </g>
+  </g>
+
+  <!-- Vertical divider -->
+  <line x1="360" y1="60" x2="360" y2="440" stroke="#ffffff" stroke-width="0.5" opacity="0.1"/>
+
+  <!-- App name -->
+  <text
+    x="420"
+    y="210"
+    font-family="Inter, -apple-system, sans-serif"
+    font-weight="700"
+    font-size="72"
+    fill="#F5F0E8"
+    letter-spacing="-2"
+  >Gitbrained</text>
+
+  <!-- Tagline -->
+  <text
+    x="422"
+    y="264"
+    font-family="Inter, -apple-system, sans-serif"
+    font-weight="400"
+    font-size="22"
+    fill="#8A9A8E"
+    letter-spacing="0.5"
+  >markdown notes. git-synced.</text>
+
+  <!-- Feature pills -->
+  <g transform="translate(422, 310)">
+    <!-- Pill 1: local-first -->
+    <rect x="0" y="0" width="148" height="34" rx="17" fill="#2A2E38"/>
+    <text x="74" y="22" font-family="Inter, -apple-system, sans-serif" font-size="13" font-weight="500" fill="#8A9A8E" text-anchor="middle">local-first</text>
+
+    <!-- Pill 2: GitHub / Gitea -->
+    <rect x="160" y="0" width="172" height="34" rx="17" fill="#2A2E38"/>
+    <text x="246" y="22" font-family="Inter, -apple-system, sans-serif" font-size="13" font-weight="500" fill="#8A9A8E" text-anchor="middle">GitHub · Gitea · Forgejo</text>
+
+    <!-- Pill 3: open source -->
+    <rect x="344" y="0" width="138" height="34" rx="17" fill="#2A2E38"/>
+    <text x="413" y="22" font-family="Inter, -apple-system, sans-serif" font-size="13" font-weight="500" fill="#8A9A8E" text-anchor="middle">open source</text>
+  </g>
+
+  <!-- Accent glow behind icon -->
+  <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#5A8A6A" stop-opacity="0.12"/>
+    <stop offset="100%" stop-color="#5A8A6A" stop-opacity="0"/>
+  </radialGradient>
+  <ellipse cx="180" cy="250" rx="160" ry="160" fill="url(#glow)"/>
+</svg>

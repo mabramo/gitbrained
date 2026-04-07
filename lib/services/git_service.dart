@@ -2,16 +2,16 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../models/repo_item.dart';
 import '../utils/error_handler.dart';
-import 'config_service.dart';
 import 'interfaces.dart';
 
 class GitService implements IGitService {
-  final ConfigService _config;
+  final IConfigService _config;
   final Dio Function(BaseOptions) _dioFactory;
   late Dio _dio;
 
-  GitService(this._config, {Dio Function(BaseOptions)? dioFactory})
-      : _dioFactory = dioFactory ?? ((opts) => Dio(opts));
+  GitService(IConfigService config, {Dio Function(BaseOptions)? dioFactory})
+      : _config = config,
+        _dioFactory = dioFactory ?? ((opts) => Dio(opts));
 
   @override
   Future<void> init() async {
