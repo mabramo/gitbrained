@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../app.dart';
 import '../models/note.dart';
 import '../services/interfaces.dart';
 import '../utils/snackbar_helper.dart';
@@ -122,34 +122,15 @@ class _ViewerScreenState extends State<ViewerScreen> {
   }
 
   MarkdownStyleSheet _buildStyleSheet(ThemeData theme) {
-    final mono = GoogleFonts.jetBrainsMono(fontSize: 13);
     final cs = theme.colorScheme;
 
     return MarkdownStyleSheet(
-      h1: GoogleFonts.inter(
-        fontSize: 26,
-        fontWeight: FontWeight.w700,
-        color: cs.onSurface,
-        height: 1.3,
-      ),
-      h2: GoogleFonts.inter(
-        fontSize: 21,
-        fontWeight: FontWeight.w600,
-        color: cs.onSurface,
-        height: 1.3,
-      ),
-      h3: GoogleFonts.inter(
-        fontSize: 17,
-        fontWeight: FontWeight.w600,
-        color: cs.onSurface,
-        height: 1.4,
-      ),
-      p: GoogleFonts.inter(
-        fontSize: 15,
-        color: cs.onSurface,
-        height: 1.65,
-      ),
-      code: mono.copyWith(
+      h1: interStyle(fontSize: 26, fontWeight: FontWeight.w700, color: cs.onSurface, height: 1.3),
+      h2: interStyle(fontSize: 21, fontWeight: FontWeight.w600, color: cs.onSurface, height: 1.3),
+      h3: interStyle(fontSize: 17, fontWeight: FontWeight.w600, color: cs.onSurface, height: 1.4),
+      p: interStyle(fontSize: 15, color: cs.onSurface, height: 1.65),
+      code: monoStyle(
+        fontSize: 13,
         backgroundColor: cs.surfaceContainerHighest,
         color: cs.primary,
       ),
@@ -159,42 +140,23 @@ class _ViewerScreenState extends State<ViewerScreen> {
       ),
       codeblockPadding: const EdgeInsets.all(12),
       blockquoteDecoration: BoxDecoration(
-        border: Border(
-          left: BorderSide(color: cs.primary, width: 3),
-        ),
+        border: Border(left: BorderSide(color: cs.primary, width: 3)),
       ),
       blockquotePadding: const EdgeInsets.only(left: 16, top: 4, bottom: 4),
-      blockquote: GoogleFonts.inter(
+      blockquote: interStyle(
         fontSize: 15,
         color: cs.onSurfaceVariant,
         fontStyle: FontStyle.italic,
         height: 1.65,
       ),
-      tableHead: GoogleFonts.inter(
-        fontWeight: FontWeight.w600,
-        color: cs.onSurface,
-      ),
-      tableBody: GoogleFonts.inter(
-        color: cs.onSurface,
-        height: 1.5,
-      ),
-      tableBorder: TableBorder.all(
-        color: cs.outlineVariant,
-        width: 0.5,
-      ),
+      tableHead: interStyle(fontWeight: FontWeight.w600, color: cs.onSurface),
+      tableBody: interStyle(color: cs.onSurface, height: 1.5),
+      tableBorder: TableBorder.all(color: cs.outlineVariant, width: 0.5),
       tableHeadAlign: TextAlign.left,
       tableCellsPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      listBullet: GoogleFonts.inter(
-        fontSize: 15,
-        color: cs.onSurfaceVariant,
-      ),
+      listBullet: interStyle(fontSize: 15, color: cs.onSurfaceVariant),
       horizontalRuleDecoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: cs.outlineVariant,
-            width: 1,
-          ),
-        ),
+        border: Border(top: BorderSide(color: cs.outlineVariant, width: 1)),
       ),
     );
   }

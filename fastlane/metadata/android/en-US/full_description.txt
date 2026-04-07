@@ -1,0 +1,18 @@
+Gitbrained is a minimal, focused markdown note-taking app that syncs to any git repository via the GitHub-compatible API.
+
+Write notes in raw markdown with a built-in toolbar for common patterns — headers, bold, italic, lists, tables, code blocks, and links. View them rendered with proper formatting: real headers, styled tables, syntax-highlighted code.
+
+Notes are saved locally first. Sync to your remote repository on a configurable interval or manually with one tap.
+
+Works with GitHub, GitLab, Gitea, and Forgejo. Self-hosted is just a URL change in settings.
+
+Features:
+• Browse your repo as a file tree with breadcrumb navigation
+• View notes as rendered markdown — headers, tables, code blocks, lists
+• Edit raw markdown with a toolbar for H1–H3, bold, italic, strikethrough, bullet/numbered/checkbox lists, inline code, code blocks, tables, horizontal rules, and links
+• Local-first: saves to device, syncs on your schedule
+• Configurable sync interval (5, 10, 15, or 30 minutes)
+• Manual sync with conflict detection
+• Works with any GitHub-compatible git host
+• No tracking, no ads, no proprietary dependencies
+• Fully open source

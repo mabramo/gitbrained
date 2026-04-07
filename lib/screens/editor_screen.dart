@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../app.dart';
 import '../models/note.dart';
 import '../services/interfaces.dart';
 import '../utils/snackbar_helper.dart';
@@ -201,7 +201,7 @@ class _EditorScreenState extends State<EditorScreen> {
                 expands: true,
                 textAlignVertical: TextAlignVertical.top,
                 keyboardType: TextInputType.multiline,
-                style: GoogleFonts.jetBrainsMono(
+                style: monoStyle(
                   fontSize: 14,
                   height: 1.7,
                   color: theme.colorScheme.onSurface,

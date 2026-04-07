@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/interfaces.dart';
 import '../utils/snackbar_helper.dart';
 import 'browser_screen.dart';
+
+// Update this to your actual donation page URL once you have one
+const _donationUrl = 'https://ko-fi.com/gitbrained';
 
 class SettingsScreen extends StatefulWidget {
   final bool isFirstLaunch;
@@ -202,6 +206,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     )
                   : const Text('Save'),
             ),
+            const SizedBox(height: 12),
+            if (!widget.isFirstLaunch) ...[
+              const Divider(height: 40),
+              OutlinedButton.icon(
+                key: const Key('donate_button'),
+                icon: const Icon(Icons.favorite_outline, size: 18),
+                label: const Text('Support development'),
+                onPressed: () async {
+                  final uri = Uri.parse(_donationUrl);
+                  if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+                    if (context.mounted) {
+                      showErrorSnackBar(context, Exception('Could not open donation link.'));
+                    }
+                  }
+                },
+              ),
+            ],
           ],
         ),
       ),
