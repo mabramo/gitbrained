@@ -5,8 +5,7 @@ import '../services/interfaces.dart';
 import '../utils/snackbar_helper.dart';
 import 'browser_screen.dart';
 
-// Update this to your actual donation page URL once you have one
-const _donationUrl = 'https://ko-fi.com/gitbrained';
+const _donationUrl = 'https://ko-fi.com/mabramo';
 
 class SettingsScreen extends StatefulWidget {
   final bool isFirstLaunch;
