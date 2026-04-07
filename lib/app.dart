@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'screens/settings_screen.dart';
 import 'screens/browser_screen.dart';
+import 'services/interfaces.dart';
 
 const _inter = 'Inter';
 const _jetBrainsMono = 'JetBrainsMono';
@@ -42,9 +44,40 @@ TextStyle monoStyle({
   );
 }
 
-class GitbrainedApp extends StatelessWidget {
+const _resumeSyncThreshold = Duration(minutes: 5);
+
+class GitbrainedApp extends StatefulWidget {
   final bool isConfigured;
   const GitbrainedApp({super.key, required this.isConfigured});
+
+  @override
+  State<GitbrainedApp> createState() => _GitbrainedAppState();
+}
+
+class _GitbrainedAppState extends State<GitbrainedApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    if (!widget.isConfigured) return;
+    final sync = context.read<ISyncService>();
+    final lastSync = sync.currentState.lastSync;
+    final stale = lastSync == null ||
+        DateTime.now().difference(lastSync) > _resumeSyncThreshold;
+    if (stale) sync.sync();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +85,7 @@ class GitbrainedApp extends StatelessWidget {
       title: 'Gitbrained',
       debugShowCheckedModeBanner: false,
       theme: _buildTheme(Brightness.dark),
-      home: isConfigured
+      home: widget.isConfigured
           ? const BrowserScreen(path: '')
           : const SettingsScreen(isFirstLaunch: true),
     );

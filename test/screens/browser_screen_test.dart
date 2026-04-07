@@ -157,4 +157,66 @@ void main() {
     // ViewerScreen should be pushed — verify the note filename appears in the app bar
     expect(find.text('note.md'), findsAtLeast(1));
   });
+
+  group('sync icon', () {
+    testWidgets('shows sync button in idle state', (tester) async {
+      when(() => git.listDirectory('')).thenAnswer((_) async => []);
+      when(() => sync.currentState).thenReturn(const SyncState());
+
+      await tester.pumpWidget(buildScreen());
+      await tester.pump();
+
+      expect(find.byIcon(Icons.sync_outlined), findsOneWidget);
+    });
+
+    testWidgets('shows spinner while syncing', (tester) async {
+      when(() => git.listDirectory('')).thenAnswer((_) async => []);
+
+      await tester.pumpWidget(buildScreen());
+      await tester.pump();
+
+      syncController.add(const SyncState(status: SyncStatus.syncing));
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byIcon(Icons.sync_outlined), findsNothing);
+    });
+
+    testWidgets('shows error icon on sync error', (tester) async {
+      when(() => git.listDirectory('')).thenAnswer((_) async => []);
+
+      await tester.pumpWidget(buildScreen());
+      await tester.pump();
+
+      syncController.add(const SyncState(status: SyncStatus.error, errorMessage: 'Network error'));
+      await tester.pump();
+
+      expect(find.byIcon(Icons.sync_problem_outlined), findsOneWidget);
+    });
+
+    testWidgets('shows warning icon on conflict', (tester) async {
+      when(() => git.listDirectory('')).thenAnswer((_) async => []);
+
+      await tester.pumpWidget(buildScreen());
+      await tester.pump();
+
+      syncController.add(const SyncState(status: SyncStatus.conflict, conflicts: ['notes/a.md']));
+      await tester.pump();
+
+      expect(find.byIcon(Icons.warning_amber_outlined), findsOneWidget);
+    });
+
+    testWidgets('tapping sync button calls sync.sync()', (tester) async {
+      when(() => git.listDirectory('')).thenAnswer((_) async => []);
+      when(() => sync.sync()).thenAnswer((_) async {});
+
+      await tester.pumpWidget(buildScreen());
+      await tester.pump();
+
+      await tester.tap(find.byIcon(Icons.sync_outlined));
+      await tester.pump();
+
+      verify(() => sync.sync()).called(1);
+    });
+  });
 }

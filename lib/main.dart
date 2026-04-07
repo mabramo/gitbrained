@@ -17,7 +17,10 @@ void main() async {
   final git = GitService(config);
   if (config.isConfigured) await git.init();
   final sync = SyncService(config, git, local);
-  if (config.isConfigured) sync.startTimer();
+  if (config.isConfigured) {
+    sync.startTimer();
+    sync.sync(); // pull on launch without blocking startup
+  }
 
   runApp(
     MultiProvider(
