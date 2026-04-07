@@ -1,41 +1,74 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Background -->
+  <!-- App background -->
   <rect width="512" height="512" rx="96" fill="#1C1F26"/>
 
-  <!-- Git branch structure -->
-  <!-- Main vertical line (trunk) -->
-  <line x1="180" y1="130" x2="180" y2="370" stroke="#7C9E87" stroke-width="22" stroke-linecap="round"/>
+  <!-- Notepad shadow -->
+  <rect x="114" y="108" width="264" height="320" rx="12" fill="#111318" opacity="0.6"/>
 
-  <!-- Branch line curving to right -->
-  <path d="M 180 200 Q 180 260 290 260" stroke="#7C9E87" stroke-width="22" stroke-linecap="round" fill="none"/>
+  <!-- Notepad body -->
+  <rect x="106" y="100" width="264" height="320" rx="12" fill="#F5F0E8"/>
 
-  <!-- Commit nodes on trunk -->
-  <circle cx="180" cy="130" r="22" fill="#7C9E87"/>
-  <circle cx="180" cy="130" r="11" fill="#1C1F26"/>
+  <!-- Notepad top binding strip -->
+  <rect x="106" y="100" width="264" height="32" rx="12" fill="#E0D8C8"/>
+  <rect x="106" y="116" width="264" height="16" fill="#E0D8C8"/>
 
-  <circle cx="180" cy="260" r="22" fill="#7C9E87"/>
-  <circle cx="180" cy="260" r="11" fill="#1C1F26"/>
+  <!-- Spiral binding holes -->
+  <circle cx="158" cy="116" r="7" fill="#1C1F26"/>
+  <circle cx="200" cy="116" r="7" fill="#1C1F26"/>
+  <circle cx="242" cy="116" r="7" fill="#1C1F26"/>
+  <circle cx="284" cy="116" r="7" fill="#1C1F26"/>
+  <circle cx="326" cy="116" r="7" fill="#1C1F26"/>
 
-  <circle cx="180" cy="370" r="22" fill="#7C9E87"/>
-  <circle cx="180" cy="370" r="11" fill="#1C1F26"/>
+  <!-- Notepad lines -->
+  <line x1="130" y1="172" x2="346" y2="172" stroke="#D4CCBC" stroke-width="2"/>
+  <line x1="130" y1="196" x2="346" y2="196" stroke="#D4CCBC" stroke-width="2"/>
+  <line x1="130" y1="220" x2="346" y2="220" stroke="#D4CCBC" stroke-width="2"/>
+  <line x1="130" y1="244" x2="346" y2="244" stroke="#D4CCBC" stroke-width="2"/>
+  <line x1="130" y1="268" x2="346" y2="268" stroke="#D4CCBC" stroke-width="2"/>
+  <line x1="130" y1="292" x2="346" y2="292" stroke="#D4CCBC" stroke-width="2"/>
+  <line x1="130" y1="316" x2="346" y2="316" stroke="#D4CCBC" stroke-width="2"/>
+  <line x1="130" y1="340" x2="346" y2="340" stroke="#D4CCBC" stroke-width="2"/>
+  <line x1="130" y1="364" x2="346" y2="364" stroke="#D4CCBC" stroke-width="2"/>
+
+  <!-- Left margin line -->
+  <line x1="152" y1="132" x2="152" y2="404" stroke="#E8A090" stroke-width="2" opacity="0.7"/>
+
+  <!-- Git branch drawn on notepad (as if sketched by pencil) -->
+  <!-- Main trunk line -->
+  <line x1="210" y1="175" x2="210" y2="370" stroke="#5A8A6A" stroke-width="9" stroke-linecap="round"/>
+
+  <!-- Branch curve to right node -->
+  <path d="M 210 240 Q 210 288 288 288" stroke="#5A8A6A" stroke-width="9" stroke-linecap="round" fill="none"/>
+
+  <!-- Top commit node -->
+  <circle cx="210" cy="175" r="14" fill="#5A8A6A"/>
+  <circle cx="210" cy="175" r="7" fill="#F5F0E8"/>
+
+  <!-- Mid commit node (branch point) -->
+  <circle cx="210" cy="240" r="14" fill="#5A8A6A"/>
+  <circle cx="210" cy="240" r="7" fill="#F5F0E8"/>
+
+  <!-- Bottom commit node -->
+  <circle cx="210" cy="370" r="14" fill="#5A8A6A"/>
+  <circle cx="210" cy="370" r="7" fill="#F5F0E8"/>
 
   <!-- Branch node -->
-  <circle cx="290" cy="260" r="22" fill="#7C9E87"/>
-  <circle cx="290" cy="260" r="11" fill="#1C1F26"/>
+  <circle cx="288" cy="288" r="14" fill="#5A8A6A"/>
+  <circle cx="288" cy="288" r="7" fill="#F5F0E8"/>
 
-  <!-- Pencil body (angled, top-right area) -->
-  <g transform="translate(295, 108) rotate(45)">
+  <!-- Pencil (angled, tip near the branch node as if it just drew it) -->
+  <g transform="translate(340, 170) rotate(35)">
     <!-- Pencil shaft -->
-    <rect x="-16" y="-90" width="32" height="130" rx="5" fill="#E8C97A"/>
-    <!-- Pencil tip -->
-    <polygon points="-16,40 16,40 0,78" fill="#D4A843"/>
-    <!-- Pencil tip point -->
-    <polygon points="-6,68 6,68 0,78" fill="#2C2A28"/>
-    <!-- Pencil eraser end -->
-    <rect x="-16" y="-104" width="32" height="18" rx="4" fill="#C47B6B"/>
-    <!-- Pencil eraser band -->
-    <rect x="-16" y="-90" width="32" height="8" fill="#B8956A"/>
-    <!-- Pencil highlight -->
-    <rect x="-8" y="-88" width="8" height="110" rx="3" fill="#F2D98A" opacity="0.5"/>
+    <rect x="-13" y="-105" width="26" height="148" rx="4" fill="#E8C97A"/>
+    <!-- Pencil wood tip -->
+    <polygon points="-13,43 13,43 0,82" fill="#D4A843"/>
+    <!-- Pencil graphite tip -->
+    <polygon points="-5,70 5,70 0,82" fill="#2C2A28"/>
+    <!-- Eraser end -->
+    <rect x="-13" y="-120" width="26" height="19" rx="4" fill="#C47B6B"/>
+    <!-- Eraser ferrule -->
+    <rect x="-13" y="-105" width="26" height="7" fill="#B8956A"/>
+    <!-- Pencil highlight stripe -->
+    <rect x="-6" y="-103" width="7" height="138" rx="2" fill="#F2D98A" opacity="0.45"/>
   </g>
 </svg>
