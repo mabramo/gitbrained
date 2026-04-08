@@ -170,4 +170,72 @@ void main() {
       verify(() => local.writeNote('note.md', 'remote content')).called(1);
     });
   });
+
+  group('resolveKeepLocal()', () {
+    test('pushes local content with fresh remote sha and clears conflict', () async {
+      // Seed a conflict in state by hand via a failed sync.
+      when(() => local.getDirtyPaths()).thenAnswer((_) async => {'notes/c.md'});
+      when(() => local.readNote('notes/c.md'))
+          .thenAnswer((_) async => makeNote('notes/c.md', sha: 'stale'));
+      when(() => git.createOrUpdateFile(
+            path: 'notes/c.md',
+            content: any(named: 'content'),
+            sha: 'stale',
+          )).thenThrow(const ConflictException('conflict'));
+      when(() => git.listDirectory('')).thenAnswer((_) async => []);
+      when(() => local.getAllShas()).thenAnswer((_) async => {});
+      await sync.sync();
+      expect(sync.currentState.conflicts, contains('notes/c.md'));
+
+      // Now resolve — fresh fetch returns current sha.
+      when(() => git.getFile('notes/c.md'))
+          .thenAnswer((_) async => (content: 'remote', sha: 'currentsha'));
+      when(() => git.createOrUpdateFile(
+            path: 'notes/c.md',
+            content: any(named: 'content'),
+            sha: 'currentsha',
+          )).thenAnswer((_) async => 'newsha');
+      when(() => local.setSha('notes/c.md', 'newsha')).thenAnswer((_) async {});
+      when(() => local.clearDirty('notes/c.md')).thenAnswer((_) async {});
+
+      await sync.resolveKeepLocal('notes/c.md');
+
+      verify(() => git.createOrUpdateFile(
+            path: 'notes/c.md',
+            content: any(named: 'content'),
+            sha: 'currentsha',
+          )).called(1);
+      expect(sync.currentState.conflicts, isNot(contains('notes/c.md')));
+      expect(sync.currentState.status, SyncStatus.idle);
+    });
+  });
+
+  group('resolveKeepRemote()', () {
+    test('writes remote content locally and clears conflict', () async {
+      // Seed conflict.
+      when(() => local.getDirtyPaths()).thenAnswer((_) async => {'notes/d.md'});
+      when(() => local.readNote('notes/d.md'))
+          .thenAnswer((_) async => makeNote('notes/d.md', sha: 'stale'));
+      when(() => git.createOrUpdateFile(
+            path: 'notes/d.md',
+            content: any(named: 'content'),
+            sha: 'stale',
+          )).thenThrow(const ConflictException('conflict'));
+      when(() => git.listDirectory('')).thenAnswer((_) async => []);
+      when(() => local.getAllShas()).thenAnswer((_) async => {});
+      await sync.sync();
+
+      when(() => git.getFile('notes/d.md'))
+          .thenAnswer((_) async => (content: 'remote content', sha: 'remoteshaabc'));
+      when(() => local.writeNote('notes/d.md', 'remote content')).thenAnswer((_) async {});
+      when(() => local.setSha('notes/d.md', 'remoteshaabc')).thenAnswer((_) async {});
+      when(() => local.clearDirty('notes/d.md')).thenAnswer((_) async {});
+
+      await sync.resolveKeepRemote('notes/d.md');
+
+      verify(() => local.writeNote('notes/d.md', 'remote content')).called(1);
+      expect(sync.currentState.conflicts, isNot(contains('notes/d.md')));
+      expect(sync.currentState.status, SyncStatus.idle);
+    });
+  });
 }

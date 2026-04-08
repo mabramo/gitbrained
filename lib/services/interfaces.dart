@@ -57,6 +57,8 @@ abstract class ISyncService {
   Stream<SyncState> get stateStream;
   SyncState get currentState;
   Future<void> sync();
+  Future<void> resolveKeepLocal(String path);
+  Future<void> resolveKeepRemote(String path);
   void startTimer();
   void restartTimer();
   void stopTimer();

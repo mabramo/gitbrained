@@ -103,6 +103,40 @@ class SyncService implements ISyncService {
     }
   }
 
+  @override
+  Future<void> resolveKeepLocal(String path) async {
+    final note = await _local.readNote(path);
+    if (note == null) return;
+    // Fetch current remote SHA so the update doesn't conflict.
+    final remote = await _git.getFile(path);
+    final remoteSha = remote.sha;
+    final newSha = await _git.createOrUpdateFile(
+      path: path,
+      content: note.content,
+      sha: remoteSha,
+    );
+    await _local.setSha(path, newSha);
+    await _local.clearDirty(path);
+    _removeConflict(path);
+  }
+
+  @override
+  Future<void> resolveKeepRemote(String path) async {
+    final (:content, :sha) = await _git.getFile(path);
+    await _local.writeNote(path, content);
+    await _local.setSha(path, sha);
+    await _local.clearDirty(path);
+    _removeConflict(path);
+  }
+
+  void _removeConflict(String path) {
+    final remaining = _state.conflicts.where((p) => p != path).toList();
+    _emit(_state.copyWith(
+      conflicts: remaining,
+      status: remaining.isEmpty ? SyncStatus.idle : SyncStatus.conflict,
+    ));
+  }
+
   void _emit(SyncState state) {
     _state = state;
     _stateController.add(state);

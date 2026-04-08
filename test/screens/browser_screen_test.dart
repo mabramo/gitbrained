@@ -203,7 +203,7 @@ void main() {
       syncController.add(const SyncState(status: SyncStatus.conflict, conflicts: ['notes/a.md']));
       await tester.pump();
 
-      expect(find.byIcon(Icons.warning_amber_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.warning_amber_outlined), findsAtLeast(1));
     });
 
     testWidgets('tapping sync button calls sync.sync()', (tester) async {

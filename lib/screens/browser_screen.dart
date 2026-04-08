@@ -13,6 +13,7 @@ import '../widgets/loading_view.dart';
 import 'viewer_screen.dart';
 import 'editor_screen.dart';
 import 'settings_screen.dart';
+import '../widgets/conflict_resolution_sheet.dart';
 
 class BrowserScreen extends StatefulWidget {
   final String path;
@@ -409,15 +410,63 @@ class _BrowserScreenState extends State<BrowserScreen> {
   }
 
   Widget _conflictBanner(ColorScheme cs) {
+    final theme = Theme.of(context);
     return Container(
       width: double.infinity,
       color: cs.errorContainer,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Text(
-        'Conflicts: ${_syncState.conflicts.join(', ')}',
-        style: TextStyle(color: cs.onErrorContainer, fontSize: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 6, bottom: 2),
+            child: Text(
+              'Conflicts — tap a file to resolve',
+              style: TextStyle(
+                color: cs.onErrorContainer,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ..._syncState.conflicts.map((path) {
+            final name = path.split('/').last;
+            return InkWell(
+              onTap: () => _openConflictSheet(path),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber_outlined,
+                        size: 13, color: cs.onErrorContainer),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onErrorContainer,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 4),
+        ],
       ),
     );
+  }
+
+  Future<void> _openConflictSheet(String path) async {
+    final resolved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => ConflictResolutionSheet(path: path),
+    );
+    if (resolved == true) _load();
   }
 
   Widget _emptyView(ThemeData theme) {
